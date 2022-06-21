@@ -7,8 +7,8 @@
 -- | tablas de la base de datos   | --
 -- ================================ --
 
-CREATE SCHEMA IF NOT EXISTS naatika1_db_vaira;
-USE naatika1_db_vaira;
+CREATE SCHEMA IF NOT EXISTS naatika1_db_Miradero;
+USE naatika1_db_Miradero;
 
 DROP TABLE IF EXISTS info_venta;
 DROP TABLE IF EXISTS datos_factura;

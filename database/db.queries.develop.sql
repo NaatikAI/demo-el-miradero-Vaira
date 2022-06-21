@@ -8,7 +8,7 @@
 -- |    la fase de desarrollo     | --
 -- ================================ --
 
-USE naatika1_db_vaira;
+USE naatika1_db_Miradero;
 
 INSERT INTO permisos VALUES
                     (0, 1, 1, 1, 1), # SUPER-ADMIN

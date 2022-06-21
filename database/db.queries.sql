@@ -7,7 +7,7 @@
 -- | consultas a la base de datos | --
 -- ================================ --
 
-USE naatika1_db_vaira;
+USE naatika1_db_Miradero;
 
 DROP PROCEDURE IF EXISTS insertar_usuario;
 DELIMITER //
@@ -776,7 +776,7 @@ CREATE PROCEDURE filtrar_ventas(IN _jsonA JSON)
     END //
 DELIMITER ;
 
-USE naatika1_db_vaira;
+USE naatika1_db_Miradero;
 
 DROP PROCEDURE IF EXISTS h_filtrar_vmensual_user;
 DELIMITER //
