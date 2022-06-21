@@ -1,0 +1,19 @@
+/* On mouse-over */
+.sidenav a:hover {
+  background-color: #f06f1e;
+}
+
+
+.col-4{
+  height: 100%;
+}
+
+.wrapper{
+  overflow-x: hidden;
+}
+
+.btn.btn-secondary{
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+        
