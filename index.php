@@ -1,4 +1,3 @@
-<!-- Pueba de colaboracion -->
 <?php
     include './services/login.php';
 ?>
