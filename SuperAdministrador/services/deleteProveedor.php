@@ -7,7 +7,7 @@
         error_log("Connection is not null");
         $bindings[] = file_get_contents('php://input');
         $bindings = json_decode($bindings[0]);
-        $sql = 'UPDATE proveedor SET activo = 0 WHERE idProveedor = :idProveedor;';
+        $sql = 'DELETE FROM proveedor WHERE idProveedor = :idProveedor;';
         $stmt = $pdo->prepare($sql);
 
         if($stmt->execute(array(

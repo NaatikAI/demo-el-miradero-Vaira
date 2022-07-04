@@ -27,7 +27,9 @@
   ];
 
   $sucursal = json_decode(POST("Vendedor/services/getSucursal.php",$data), true);
+  //echo "<script>console.log('Console: " . json_encode($sucursal) . "' );</script>"; 
   $sucursal = $sucursal[0];
+  //echo "<script>console.log('Console: " . json_encode($sucursal) . "' );</script>";
   if($_SERVER["REQUEST_METHOD"] == "POST"){
     if(isset($_POST['punto_de_venta'])){
       $_SESSION['id_punto_de_venta'] = $_POST['punto_de_venta'];

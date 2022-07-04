@@ -3,7 +3,7 @@
 ?>
 
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
    <!-- Evita reenviar el formulario cuando se recarga la página-->
    <script>
@@ -19,9 +19,9 @@
     <link rel="stylesheet" href="./css/estilos.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title>Login</title>
-    <script src="Vendedor/js/jsVendedor.js"></script>
-    <script src="js/jsAdmin.js"></script>
-    <script src="js/javascript.js"></script>
+    <script src="./Vendedor/js/jsVendedor.js"></script>
+    <script src="./Administrador/js/jsAdmin.js"></script>
+    <script src="./SuperAdministrador/js/javascript.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/charts.css/dist/charts.min.css">
 
   </head>

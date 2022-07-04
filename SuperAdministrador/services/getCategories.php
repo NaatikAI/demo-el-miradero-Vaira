@@ -8,7 +8,7 @@
         $bindings[] = file_get_contents('php://input');
         $sql = 'SELECT idCategoria, nombre FROM categoria';
         $stmt = $pdo->prepare($sql);
-        if($stmt->execute($bindings)){
+        if($stmt->execute()){
             while($row = $stmt->fetch(PDO::FETCH_NUM)){
                 $data[] = $row;
             }

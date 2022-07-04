@@ -26,25 +26,28 @@
   <div class="wrapper"  style="height:65vh;">
     <?php
     // * Validamos que la sucursal exista
-    if ($sucursal != null){
-      $data = [
-        "sucursal" => $sucursal[0]
-      ];
-      $info_sucursal = json_decode(Post("Vendedor/services/getInfoSucursal.php",$data),true);
+   // echo "<script>console.log('ConsoleNV: " . json_encode($sucursal) . "' );</script>"; 
+    if ($sucursal != -1){
+        $data = [
+            "sucursal" => $sucursal
+                ];
+     //   echo "<script>console.log('ConsoleNV: " . json_encode($sucursal) . "' );</script>"; 
+        $info_sucursal = json_decode(Post("Vendedor/services/getInfoSucursal.php",$data),true);
     } else
-      $data = [
-        "sucursal" => null
-      ];
-    
+      $data = [ "sucursal" => -1 ];
+
+      //echo "<script>console.log('ConsoleNV_info_S: " . json_encode($info_sucursal) . "' );</script>";
+      //echo "<script>console.log('ConsoleNV_data: " . json_encode($data) . "' );</script>";
     if(isset($_POST['busqueda'])){
       $data = [
-        "sucursal" => $sucursal[0],
+        "sucursal" => $sucursal,
         "busqueda" => trim($_POST['busqueda'])
       ];
+     // echo json_encode($data);
       $input_from_db = json_decode(Post("Vendedor/services/getSearch.php",$data),true);
     } else if (isset($_POST['categoria'])) {
       $data = [
-        "sucursal" => $sucursal[0],
+        "sucursal" => $sucursal,
         "categoria" => $_POST['categoria']
       ];
       $input_from_db = json_decode(Post("Vendedor/services/getFilters.php",$data),true);
@@ -65,7 +68,7 @@
               <form action="'.htmlspecialchars($_SERVER["PHP_SELF"]).'?nueva_venta=true" method="POST">
 
                   <input hidden name="id_producto" value='.$value[0].'> </input>
-                  <input hidden name="cantidad" value=1> </input>
+                  <input hidden name="cantidad" value='.'1'.'> </input> 
                   <input hidden name="nombre_producto" value="'.$value[1].'"> </input>
                   <input hidden name="precio_unitario" value="'.$value[5].'"> </input>
                   <input hidden name="sku_producto" value="'.$value[3].'"> </input>
@@ -98,7 +101,7 @@
 
       if ($input_from_db == null)
         echo('<p>No se encontraron productos</p>');
-    ?>
+   ?>
     
   </div>
 
@@ -142,13 +145,15 @@
         if(isset($_SESSION['cart'][$_SESSION['id_punto_de_venta']])){
           if(isset($_POST["remove_product_from_id"])){
             foreach ($_SESSION["cart"][$_SESSION['id_punto_de_venta']] as $clave => $valor){
-              if($valor["id_producto"] == $_POST["remove_product_from_id"]){
+              if($valor["id_producto"] == @$_POST["remove_product_from_id"]){
                 unset($_SESSION["cart"][$_SESSION['id_punto_de_venta']][$clave]);
                 unset($_POST["remove_product_from_id"]);
               }
             }
           }
           foreach($_SESSION['cart'][$_SESSION['id_punto_de_venta']] as $value){
+            //echo json_encode($_SESSION['cart'][$_SESSION['id_punto_de_venta']]);
+            //echo 'Valor:' . json_encode($value);
             echo('
               <div class="row justify-content-md-center">
                 <div class="col-sm-2" >
@@ -193,12 +198,14 @@
             $index++;
           }
           if(count($_SESSION["cart"][$_SESSION['id_punto_de_venta']] ) > 0){
+            //echo json_encode(count($_SESSION["cart"][$_SESSION['id_punto_de_venta']]));
             echo('
               <br>
               <div class="row justify-content-md-center">
                 <div class="col-sm-6" >
                   <h4 id="ticket_IVA">$ 00</h4>
                   <h4 id="ticket_total">$ 00</h4>
+                  <h4></h4>
                 </div>
               </div>
             
@@ -207,6 +214,7 @@
                   <div class="row justify-content-md-center">
                     <div class="col-sm-6" >
                     <button style="margin-bottom: 25px;" id="generate_ticket_button" type="button" class="btn btn-primary">Generar venta</button>
+                   
                     </div>
                   </div>
                   
@@ -219,6 +227,7 @@
               var global_total = global_iva = idVenta = 0
               let updateTicket= () =>{
                 var subtotal = 0
+                
 
                 for(var i = 0; i < '.$index.'; i++){
                   subtotal += eval("product_cost_" + i)
@@ -257,7 +266,6 @@
                   };
   
                 echo(']});
-
                 fetch("./services/generateSale.php/", {
                   method: "POST",
                   body: data
@@ -270,7 +278,6 @@
                 ).catch(
                     error => console.log(error)
                 )
-
                 console.log(idVenta)
 
                 Swal.fire({

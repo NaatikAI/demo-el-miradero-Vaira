@@ -1,9 +1,10 @@
 <?php 
 // ? LOCAL STORAGE
     $servername = "localhost";
-    $username = "naatika1_Mirader0";
-    $password = "ly9=cEwMe__+";
-    $dbname = "naatika1_db_Miradero";
+    $username = "naatika1_VARIA_150622";
+    //$password = "root";
+    $password = "Ekq3l#pE6qYr";
+    $dbname = "naatika1_db_vaira";
 
 
     try {

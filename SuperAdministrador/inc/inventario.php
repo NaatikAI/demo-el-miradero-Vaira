@@ -34,30 +34,41 @@ if(isset($_POST['addCategoria'])){
 }
 
 if(isset($_POST['addProduct'])){
-  $check = @getimagesize($_FILES['img'.$_POST['idProducto']]['tmp_name']);
-  if($check !== false){
-    $data = [
-      'nombre' => $_POST['nombre'],
-      'costo' => $_POST['costo'],
-      'precio' => $_POST['precio'],
-      'imagen' => $_FILES['img']['name'],
-      'categoria' => $_POST['categoria'],
-      'proveedor' => $_POST['proveedor'],
-      'activo' => 1,
-      'servicio' => $_POST['servicio']
-    ];
+  //echo $_POST['idProducto'];
+  
+  if ($_FILES["img"]["error"]==4){ 
+  $check = false;
+  //echo $check;
+} else
+  $check = @getimagesize($_FILES['img']['tmp_name']);
+  //echo json_encode($check);
+  
+  
+  if($check != false){
+           //echo "Con imagen";
+           $data = [
+          'nombre' => $_POST['nombre'],
+          'costo' => $_POST['costo'],
+          'precio' => $_POST['precio'], 
+          'imagen' => $_FILES['img']['name'],
+          'categoria' => $_POST['categoria'],
+          'proveedor' => $_POST['proveedor'],
+          'activo' => 1,
+          'servicio' => $_POST['servicio']
+                  ];
   } else {
-    $data = [
-      'nombre' => $_POST['nombre'],
-      'costo' => $_POST['costo'],
-      'precio' => $_POST['precio'],
-      'imagen' => "",
-      'categoria' => $_POST['categoria'],
-      'proveedor' => $_POST['proveedor'],
-      'activo' => 1,
-      'servicio' => $_POST['servicio']
-    ];
-  }
+            //echo 'Sin imagen';
+            $data = [
+            'nombre' => $_POST['nombre'],
+            'costo' => $_POST['costo'],
+            'precio' => $_POST['precio'],
+            'imagen' => "",
+            'categoria' => $_POST['categoria'],
+            'proveedor' => $_POST['proveedor'],
+            'activo' => 1,
+            'servicio' => $_POST['servicio']
+                    ];
+               }
             
   $status = json_decode(POST('SuperAdministrador/services/addProduct.php', $data), true);
   if($status == "Success"){
@@ -111,15 +122,45 @@ if(isset($_GET["id"])){
 
 if(isset($_POST['cargar_csv'])){
   require "load_csv.php";
-  $carpeta_destino = "./temp_csv/";      
-  $archivo_subido = $carpeta_destino . $_FILES['adjunto']['name'];
-  move_uploaded_file($_FILES['adjunto']['tmp_name'], $archivo_subido);
-  $resultado = process_csv($archivo_subido);
-  foreach ($resultado as $linea){
-    if($linea){
-      $info_producto = explode(",", $linea[0]);
-      if($info_producto[0] != ''){
-        $data = [
+  $carpeta_destino = "temp_csv/";      
+  $archivo_subido = $carpeta_destino . basename($_FILES['adjunto']['name']);
+  $archivo_temporal= $_FILES['adjunto']['tmp_name'];
+  if(false)
+  if(move_uploaded_file($archivo_temporal, $archivo_subido) == false){
+    if(false)
+    echo "<script>Swal.fire({
+    title: 'Error',
+    text: 'No se pudo subir el archivo',
+    icon: 'error',
+      confirmButtonText: 'Ok'
+    }).then((result)=>{
+      if(result.isConfirmed){
+        window.location.href='index.php?inventario=true';
+      }
+    }) </script>";
+  }
+  //print_r($_FILES['adjunto']['error']);
+  //else{
+    $resultado = process_csv($_FILES['adjunto']['tmp_name']);
+    foreach ($resultado as $linea){
+      if($linea){
+        
+        $info_producto = explode(",", $linea[0]);
+        
+        /*echo '***** info_PROD **** <br>';
+        $info_producto_log = json_encode($info_producto);
+        echo "$info_producto_log <br>"; */
+        
+        if($info_producto[0] != '' ){
+
+          /*echo "categoria:  $info_producto[0] <br>
+                proveedor:  $info_producto[1] <br>
+                nombre:     $info_producto[2] <br>
+                costo:      $info_producto[3] <br>
+                precio:     $info_producto[4] <br>
+                servicio:   $info_producto[5] <br>";*/
+
+          $data = [
           'categoria' => $info_producto[0],
           'proveedor' => $info_producto[1],
           'nombre'    => $info_producto[2],
@@ -130,10 +171,13 @@ if(isset($_POST['cargar_csv'])){
           'activo'    => 1
         ];  
       }
+      //$data_log = json_encode($data);
+      //echo "Datos = $data_log";
       $status = json_decode(POST('SuperAdministrador/services/addMultipleProducts.php', $data), true);
     }
   }
-  if($status[0] != '¡Error!')
+ 
+  if(($status == 'Success' ))
     echo ('
       <script>
         $title = "Exito!"
@@ -141,10 +185,19 @@ if(isset($_POST['cargar_csv'])){
         alertSuccess($msg)
       </script>
     ');
+    else 
+    echo ('
+    <script>
+      $title = "ERROR!"
+      $msg = "Error al agregar productos"
+      alertError($msg)
+    </script>
+  ');
 
-  unlink($archivo_subido);
+  unlink($archivo_temporal);
+//}
+
 }
-
 if(isset($_POST['edit-product'])){
   $check = @getimagesize($_FILES['img'.$_POST['idProducto']]['tmp_name']);
   if($check !== false){
@@ -253,6 +306,7 @@ if(isset($_POST['edit-product'])){
       }
       $index = 0;
       foreach($input_from_db as $producto){
+        //echo json_encode($producto); //[0,"pepsi",0,"PEP-PEP-100","papas.png","21.00","papas",2,"20.00"]
         if($index != 0 && $index% 5==0)
           echo '<div class="row" style="margin: 0 0 5px 0;">';
         if($producto[4] == null)

@@ -4,8 +4,8 @@ if(isset($_POST['edit-product'])){
   $data = [
     'fkUsuario' => $id_usuario,
     'fkSucursal' => $sucursal,
-    'fkProducto' => $_POST['idProducto'],
-    'cantidad' => $_POST['existencia']
+    'fkProducto' => @$_POST['idProducto'],
+    'cantidad' => @$_POST['existencia']
   ];
   // var_dump($data);
   $reponse = json_decode(Post("Administrador/services/updateProductsInventory.php",$data),true);

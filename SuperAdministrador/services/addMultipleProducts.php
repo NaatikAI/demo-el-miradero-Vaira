@@ -12,7 +12,7 @@
             $data = "Success";
           
         }else{
-            $data[] = "Error";
+            $data[] = "¡Error!";
         }
     }
     else{

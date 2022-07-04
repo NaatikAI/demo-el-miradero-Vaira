@@ -7,7 +7,7 @@
 -- | consultas a la base de datos | --
 -- ================================ --
 
-USE naatika1_db_Miradero;
+USE naatika1_db_vaira;
 
 DROP PROCEDURE IF EXISTS insertar_usuario;
 DELIMITER //
@@ -45,9 +45,9 @@ CREATE PROCEDURE insertar_usuario(IN _jsonA JSON)
         SET _fkTipo    = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.rol'      ));
 
         START TRANSACTION;
-            INSERT INTO usuario VALUES (0, _fkTipo, _usuario, sha2(_password, 512), _nombre, _apellidoP, _apellidoM, _correo, _telefono, 1);
+            INSERT INTO usuario (fkTipo, usuario, password, nombre, apellidoP, apellidoM, correo, telefono, activo) VALUES (_fkTipo, _usuario, sha2(_password, 512), _nombre, _apellidoP, _apellidoM, _correo, _telefono, 1);
             SELECT idUsuario INTO _fkUsuario FROM usuario WHERE usuario = _usuario;
-            INSERT INTO log_usuario VALUES (0, _fkUsuario, NOW(), NOW(), NULL);
+            INSERT INTO log_usuario (fkUsuario, crear, modificar, desactivar)  VALUES (_fkUsuario, NOW(), NOW(), NULL);
 
             IF (_fkTipo = 3) THEN
                 SET _fkSucursal = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.sucursal'));
@@ -187,25 +187,25 @@ CREATE PROCEDURE insertar_multiple_productos(IN _jsonA JSON)
 
         START TRANSACTION;
 
-            IF((SELECT COUNT(*) FROM categoria WHERE nombre = _categoria) = 0) THEN
+            IF((SELECT COUNT(1) FROM categoria WHERE nombre = _categoria) = 0) THEN
                 SELECT CONCAT('No existe la categoria: ',_categoria) as 'Status';
                 ROLLBACK;
             ELSE
                 SELECT idCategoria INTO _fkCategoria FROM categoria WHERE nombre = _categoria;
-                IF((SELECT COUNT(*) FROM proveedor WHERE nombre = _proveedor) = 0) THEN
+                IF((SELECT COUNT(1) FROM proveedor WHERE nombre = _proveedor) = 0) THEN
                     SELECT CONCAT('No existe el proveedor: ',_proveedor) as 'Status';
                     ROLLBACK;
                 ELSE
                     SELECT idProveedor INTO _fkProveedor FROM proveedor WHERE nombre = _proveedor;
-                    SELECT COUNT(*) INTO _cantidad FROM producto INNER JOIN proveedor p on producto.fkProveedor = p.idProveedor WHERE idProveedor = _fkProveedor;
+                    SELECT COUNT(1) INTO _cantidad FROM producto INNER JOIN proveedor p on producto.fkProveedor = p.idProveedor WHERE idProveedor = _fkProveedor;
 
                     SET _sku = UPPER(CONCAT(LEFT(_proveedor,3),'-', LEFT(_nombre,3),'-',(100 + _cantidad)));
 
-                    INSERT INTO producto VALUES (0, _fkCategoria, _fkProveedor, _nombre, _costo, _precio, _sku, _imagen, _activo, _servicio);
+                    INSERT INTO producto (fkCategoria, fkProveedor, nombre, costo, precio, sku, imagen, activo, servicio) VALUES (_fkCategoria, _fkProveedor, _nombre, _costo, _precio, _sku, _imagen, _activo, _servicio);
                     SELECT idProducto INTO _idProducto FROM producto WHERE nombre = _nombre LIMIT 1;
-                    INSERT INTO log_producto VALUES (0, _idProducto, NOW(), NULL, NULL);
+                    INSERT INTO log_producto (fkProducto, crear, modificar, desactivar) VALUES ( _idProducto, NOW(), NULL, NULL);
 
-                    SELECT COUNT(*) INTO _limite FROM sucursal;
+                    SELECT COUNT(1) INTO _limite FROM sucursal;
                     WHILE _index < _limite DO
                         SELECT idSucursal INTO _idSucursal FROM sucursal ORDER BY idSucursal LIMIT _index, 1;
                         INSERT INTO existencia VALUE (_idProducto, _idSucursal, 0);
@@ -257,7 +257,7 @@ CREATE PROCEDURE insertar_producto(IN _jsonA JSON)
         SET _nombre      = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.nombre'   ));
         SET _costo       = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.costo'    ));
         SET _precio      = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.precio'   ));
-        SET _imagen      = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.imgen'   ));
+        SET _imagen      = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.imagen'   ));
         SET _activo      = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.activo'   ));
         SET _servicio    = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.servicio' ));
 
@@ -268,7 +268,7 @@ CREATE PROCEDURE insertar_producto(IN _jsonA JSON)
         SET _sku = UPPER(CONCAT(LEFT(_proveedor,3),'-', LEFT(_nombre,3),'-',(100 + _cantidad)));
 
         START TRANSACTION;
-            INSERT INTO producto VALUES (0, _fkCategoria, _fkProveedor, _nombre, _costo, _precio, _sku, _imagen, _activo, _servicio);
+            INSERT INTO producto (fkCategoria, fkProveedor, nombre, costo, precio, sku, imagen,activo, servicio) VALUES (_fkCategoria, _fkProveedor, _nombre, _costo, _precio, _sku, _imagen, _activo, _servicio);
             SELECT idProducto INTO _idProducto FROM producto WHERE nombre = _nombre LIMIT 1;
             INSERT INTO log_producto VALUES (0, _idProducto, NOW(), NULL, NULL);
 
@@ -513,7 +513,7 @@ BEGIN
             INNER JOIN region_iva ri on sucursal.fkRegion = ri.idRegion WHERE idPunto = _fkPunto;
 
         SELECT fkSucursal INTO _fkSucursal FROM punto_venta WHERE idPunto = _fkPunto;
-        INSERT INTO venta VALUES(0,_fkUsuario,_fkTipoPago,_fkSucursal,_total,NOW());
+        INSERT INTO venta (fkUsuario, fkTipoPago, fkSucursal, total, fecha) VALUES(_fkUsuario, _fkTipoPago, _fkSucursal, _total, NOW());
 
         WHILE _contador >= 0 DO
             SET _contador = _contador - 1;
@@ -524,7 +524,7 @@ BEGIN
             SET _cantidad = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.cantidad'));
 
             SELECT SUM(_cantidad * precio * (_iva + 1)) INTO _subTotal FROM producto JOIN existencia ON producto.idProducto = existencia.fkProducto WHERE sku = _sku AND fkSucursal = (SELECT fkSucursal FROM punto_venta WHERE idPunto = _fkPunto);
-            SELECT idVenta into _idVenta FROM venta WHERE fkUsuario = _fkUsuario && fkTipoPago = _fkTipoPago && fecha = NOW() && total = _total;
+            SELECT idVenta into _idVenta FROM venta WHERE fkUsuario = _fkUsuario AND fkTipoPago = _fkTipoPago AND fecha = NOW() AND total = _total;
 
             SELECT fkSucursal INTO _fkSucursal FROM punto_venta WHERE idPunto = _fkPunto;
 
@@ -536,7 +536,7 @@ BEGIN
             SELECT isr INTO _isr FROM categoria INNER JOIN producto p on categoria.idCategoria = p.fkCategoria WHERE idProducto = _fkProducto;
 
             IF ((SELECT cantidad FROM existencia WHERE fkSucursal =_fkSucursal AND fkProducto = _fkProducto) >= _cantidad) THEN
-                INSERT INTO info_venta VALUES (0,_fkProducto, _idVenta, _cantidad, _iva, _ieps, _isr, _subtotal);
+                INSERT INTO info_venta(fkProducto, fkVenta, cantidad, iva, ieps, isr, subtotal) VALUES (_fkProducto, _idVenta, _cantidad, _iva, _ieps, _isr, _subtotal);
                 UPDATE existencia SET cantidad = cantidad - _cantidad WHERE fkProducto = _fkProducto AND fkSucursal = (SELECT fkSucursal FROM punto_venta WHERE idPunto = _fkPunto);
             ELSE
                 SET _contador = -10;
@@ -613,7 +613,7 @@ CREATE PROCEDURE generar_factura(IN _jsonA JSON)
         SET _correo     = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.correo'    ));
 
         START TRANSACTION;
-            INSERT INTO datos_factura VALUES (0,_fkVenta,_fkRegimen,_rfc,_cp_persona,_nombre,_apellidoP,_apellidoM,_correo);
+            INSERT INTO datos_factura (fkVenta, fkRegimen, rfc, cp_persona, nombre, apellidoP, apellidoM, correo)VALUES (_fkVenta,_fkRegimen,_rfc,_cp_persona,_nombre,_apellidoP,_apellidoM,_correo);
         COMMIT;
     END //
 DELIMITER ;
@@ -685,7 +685,7 @@ CREATE PROCEDURE generar_devolucion(IN _jsonA JSON)
 
                         DELETE FROM info_venta WHERE fkVenta = _idVenta;
                         DELETE FROM venta WHERE DATE(fecha) = DATE(_date) AND fkUsuario = _fkUsuario AND idVenta = _idVenta;
-                        INSERT INTO egresos VALUES (0,2,_fkUsuario,_fkSucursal,_total,NOW());
+                        INSERT INTO egresos (fkMotivo, fkUsuario, fkSucursal, total, fecha) VALUES (2, _fkUsuario, _fkSucursal, _total, NOW());
                         SELECT 'Devolución autorizada' as 'Status';
                     ELSE
                         SELECT 'La venta no existe' as 'Status';
@@ -776,7 +776,7 @@ CREATE PROCEDURE filtrar_ventas(IN _jsonA JSON)
     END //
 DELIMITER ;
 
-USE naatika1_db_Miradero;
+USE naatika1_db_vaira;
 
 DROP PROCEDURE IF EXISTS h_filtrar_vmensual_user;
 DELIMITER //
@@ -1271,19 +1271,19 @@ CREATE PROCEDURE actualizar_usuario(IN _jsonA JSON)
         SET _password  = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.password'));
 
         IF (_password = '') THEN
-            IF(_correo != (SELECT correo FROM usuario WHERE idUsuario = _idUsuario) && _telefono != (SELECT telefono FROM usuario WHERE idUsuario = _idUsuario)) THEN
+            IF(_correo != (SELECT correo FROM usuario WHERE idUsuario = _idUsuario) AND _telefono != (SELECT telefono FROM usuario WHERE idUsuario = _idUsuario)) THEN
                 UPDATE usuario SET correo = _correo, telefono = _telefono WHERE idUsuario = _idUsuario;
-            ELSEIF(_correo = (SELECT correo FROM usuario WHERE idUsuario = _idUsuario) && _telefono != (SELECT telefono FROM usuario WHERE idUsuario = _idUsuario)) THEN
+            ELSEIF(_correo = (SELECT correo FROM usuario WHERE idUsuario = _idUsuario) AND _telefono != (SELECT telefono FROM usuario WHERE idUsuario = _idUsuario)) THEN
                 UPDATE usuario SET telefono = _telefono WHERE idUsuario = _idUsuario;
-            ELSEIF(_correo != (SELECT correo FROM usuario WHERE idUsuario = _idUsuario) && _telefono = (SELECT telefono FROM usuario WHERE idUsuario = _idUsuario)) THEN
+            ELSEIF(_correo != (SELECT correo FROM usuario WHERE idUsuario = _idUsuario) AND _telefono = (SELECT telefono FROM usuario WHERE idUsuario = _idUsuario)) THEN
                 UPDATE usuario SET correo = _correo WHERE idUsuario = _idUsuario;
             END IF;
         ELSE
-            IF(_correo != (SELECT correo FROM usuario WHERE idUsuario = _idUsuario) && _telefono != (SELECT telefono FROM usuario WHERE idUsuario = _idUsuario)) THEN
+            IF(_correo != (SELECT correo FROM usuario WHERE idUsuario = _idUsuario) AND _telefono != (SELECT telefono FROM usuario WHERE idUsuario = _idUsuario)) THEN
                 UPDATE usuario SET correo = _correo, telefono = _telefono, password = sha2(_password, 512) WHERE idUsuario = _idUsuario;
-            ELSEIF(_correo = (SELECT correo FROM usuario WHERE idUsuario = _idUsuario) && _telefono != (SELECT telefono FROM usuario WHERE idUsuario = _idUsuario)) THEN
+            ELSEIF(_correo = (SELECT correo FROM usuario WHERE idUsuario = _idUsuario) AND _telefono != (SELECT telefono FROM usuario WHERE idUsuario = _idUsuario)) THEN
                 UPDATE usuario SET telefono = _telefono, password = sha2(_password, 512) WHERE idUsuario = _idUsuario;
-            ELSEIF(_correo != (SELECT correo FROM usuario WHERE idUsuario = _idUsuario) && _telefono = (SELECT telefono FROM usuario WHERE idUsuario = _idUsuario)) THEN
+            ELSEIF(_correo != (SELECT correo FROM usuario WHERE idUsuario = _idUsuario) AND _telefono = (SELECT telefono FROM usuario WHERE idUsuario = _idUsuario)) THEN
                 UPDATE usuario SET correo = _correo, password = sha2(_password, 512) WHERE idUsuario = _idUsuario;
             END IF;
         END IF;
@@ -1594,7 +1594,7 @@ CREATE PROCEDURE actualizar_producto_inventario(IN _jsonA JSON)
                 IF((SELECT COUNT(*) FROM existencia WHERE fkSucursal = _fkSucursal AND fkProducto = _fkProducto) > 0) THEN
                     IF((SELECT cantidad FROM existencia WHERE fkSucursal = _fkSucursal AND fkProducto = _fkProducto) < _cantidad) THEN
                         UPDATE existencia SET cantidad = _cantidad WHERE fkSucursal = _fkSucursal AND fkProducto = _fkProducto;
-                        INSERT INTO egresos VALUE (0, 1, _fkUsuario, _fkSucursal, _total, NOW());
+                        INSERT INTO egresos (fkMotivo, fkUsuario, fkSucursal, total, fecha) VALUE (1, _fkUsuario, _fkSucursal, _total, NOW());
                         SELECT 'SUCCESS' AS "RESULTADO";
                     ELSE
                         SELECT 'La cantidad debe ser mayor a la existente' AS "RESULTADO";
@@ -1631,7 +1631,7 @@ CREATE PROCEDURE insertar_proveedor(IN _jsonA JSON)
         SET _correo     = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.correo'     ));
 
         START TRANSACTION ;
-            INSERT INTO proveedor VALUES (0, _nombre, _telefono, _correo, 1);
+            INSERT INTO proveedor (nombre, telefono, correo, activo) VALUES ( _nombre, _telefono, _correo, 1);
             SELECT idProveedor AS 'IDENTIFICADOR' FROM proveedor WHERE nombre = _nombre;
         COMMIT ;
     END //
@@ -1650,7 +1650,7 @@ CREATE PROCEDURE h_insertar_sucursal(IN _jsonA JSON)
 
         DECLARE EXIT HANDLER FOR SQLEXCEPTION
         BEGIN
-            SELECT '¡ErrorDDD!' as 'Resultado';
+            SELECT '¡Error!' as 'Resultado';
             ROLLBACK;
         END;
 
@@ -1699,7 +1699,7 @@ CREATE PROCEDURE insertar_sucursal(IN _jsonA JSON)
         SET _region     = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.region'    ));
 
         START TRANSACTION ;
-            INSERT INTO sucursal VALUES (0, _region, null, _nombre, _calle, _colonia, _cp, _telefono);
+            INSERT INTO sucursal (fkRegion, fkAdmin, nombre, calle, colonia, CP, telefono) VALUES (_region, null, _nombre, _calle, _colonia, _cp, _telefono);
             SELECT idSucursal INTO _idSucursal FROM sucursal WHERE nombre = _nombre AND calle = _calle AND CP = _cp ORDER BY idSucursal DESC LIMIT 1;
             CALL h_insertar_sucursal(CONCAT('[{"idSucursal":',_idSucursal,'}]'));
             SELECT 'Sucursal agregada' as 'Resultado';
@@ -1833,7 +1833,7 @@ CREATE PROCEDURE agregar_categoria(IN _jsonA JSON)
         SET _isr            = JSON_UNQUOTE(JSON_EXTRACT(_json, '$.isr'          ));
 
         START TRANSACTION ;
-            INSERT INTO categoria VALUES (0, _nombre, _descripcion, _impuesto_iva, _ieps, _isr);
+            INSERT INTO categoria (nombre, descripcion, impuestoIVA, ieps, isr) VALUES (_nombre, _descripcion, _impuesto_iva, _ieps, _isr);
             SELECT idCategoria FROM categoria WHERE nombre = _nombre;
         COMMIT ;
 

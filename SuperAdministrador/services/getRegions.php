@@ -7,7 +7,7 @@
         $bindings[] = file_get_contents('php://input');
         $sql = 'SELECT idRegion, iva, nombre FROM region_iva JOIN ciudad c on region_iva.fkCiudad = c.idCiudad;';
         $stmt = $pdo->prepare($sql);
-        if($stmt->execute($bindings)){
+        if($stmt->execute()){
             while($row = $stmt->fetch(PDO::FETCH_NUM)){
                 $data[] = $row;
             }
